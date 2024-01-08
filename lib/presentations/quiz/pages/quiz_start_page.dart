@@ -1,4 +1,6 @@
 import 'package:fic10_cbt/core/extensions/build_context_ext.dart';
+import 'package:fic10_cbt/presentations/quiz/bloc/daftar_soal/daftar_soal_bloc.dart';
+import 'package:fic10_cbt/presentations/quiz/bloc/hitung_nilai/hitung_nilai_bloc.dart';
 import 'package:fic10_cbt/presentations/quiz/bloc/ujian_by_kategori/ujian_by_kategori_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -41,25 +43,58 @@ class _QuizStartPageState extends State<QuizStartPage> {
       actions: [
         Assets.icons.clock.image(width: 24.0),
         const SizedBox(width: 8.0),
-        BlocBuilder<UjianByKategoriBloc, UjianByKategoriState>(
-          builder: (context, state) {
-            return state.maybeWhen(
-              orElse: () {
-                return const SizedBox();
-              },
-              loaded: (e) {
-                return CountdownTimer(
-                  duration: e.timer,
-                  onTimerCompletion: (timeRemaining) {
-                    context.pushReplacement(QuizFinishPage(
-                      data: widget.data,
-                      timeRemaining: timeRemaining,
-                    ));
-                  },
-                );
+        BlocListener<UjianByKategoriBloc, UjianByKategoriState>(
+          listener: (context, state) {
+            state.maybeWhen(
+              orElse: () {},
+              loaded: (e) async {
+                if (e.timer == 0) {
+                  //dialog waktu habis
+                  await showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text('Waktu habis'),
+                          content: const Text(
+                              'Waktu anda telah habis,silahkan klik tombol selesai'),
+                          actions: [
+                            TextButton(
+                                onPressed: () {
+                                  context.pushReplacement(QuizFinishPage(
+                                      data: widget.data, timeRemaining: 0));
+                                },
+                                child: const Text('Selesai'))
+                          ],
+                        );
+                      });
+                } else {
+                  context
+                      .read<DaftarSoalBloc>()
+                      .add(DaftarSoalEvent.getDaftarSoal(e.data));
+                }
               },
             );
           },
+          child: BlocBuilder<UjianByKategoriBloc, UjianByKategoriState>(
+            builder: (context, state) {
+              return state.maybeWhen(
+                orElse: () {
+                  return const SizedBox();
+                },
+                loaded: (e) {
+                  return CountdownTimer(
+                    duration: e.timer,
+                    onTimerCompletion: (timeRemaining) {
+                      context.pushReplacement(QuizFinishPage(
+                        data: widget.data,
+                        timeRemaining: timeRemaining,
+                      ));
+                    },
+                  );
+                },
+              );
+            },
+          ),
         ),
         IconButton(
             onPressed: () {
@@ -83,34 +118,46 @@ class _QuizStartPageState extends State<QuizStartPage> {
               fontSize: 18,
             ),
           ),
-          BlocBuilder<UjianByKategoriBloc, UjianByKategoriState>(
-            builder: (context, state) {
-              return state.maybeWhen(
-                orElse: () {
-                  return const SizedBox();
-                },
-                loaded: (e) {
-                  return Row(
-                    children: [
-                      Flexible(
-                        child: LinearProgressIndicator(
-                          value: 1 / e.data.length,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 16.0),
-                      Text(
-                        '$quizNumber/${e.data.length}',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ],
-                  );
+          BlocListener<HitungNilaiBloc, HitungNilaiState>(
+            listener: (context, state) {
+              state.maybeWhen(
+                orElse: () {},
+                success: (nilai) {
+                  print('lewat');
+                  context.pushReplacement(
+                      QuizFinishPage(data: widget.data, timeRemaining: 0));
                 },
               );
             },
+            child: BlocBuilder<DaftarSoalBloc, DaftarSoalState>(
+              builder: (context, state) {
+                return state.maybeWhen(
+                  orElse: () {
+                    return const SizedBox();
+                  },
+                  success: (data, index, isNext) {
+                    return Row(
+                      children: [
+                        Flexible(
+                          child: LinearProgressIndicator(
+                            value: (index + 1) / data.length,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 16.0),
+                        Text(
+                          '${index + 1}/${data.length}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
           ),
           const SizedBox(height: 16.0),
-          const QuizMultipleChoice(),
+          QuizMultipleChoice(kategori: widget.data.kategori),
         ],
       ),
     );

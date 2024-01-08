@@ -8,16 +8,22 @@ import 'package:fic10_cbt/presentations/auth/pages/login_page.dart';
 import 'package:fic10_cbt/presentations/home/bloc/bloc/content_bloc.dart';
 import 'package:fic10_cbt/presentations/home/pages/dashboard_page.dart';
 import 'package:fic10_cbt/presentations/materi/bloc/materi/materi_bloc.dart';
+import 'package:fic10_cbt/presentations/quiz/bloc/answer/answer_bloc.dart';
 import 'package:fic10_cbt/presentations/quiz/bloc/create_ujian/create_ujian_bloc.dart';
+import 'package:fic10_cbt/presentations/quiz/bloc/daftar_soal/daftar_soal_bloc.dart';
+import 'package:fic10_cbt/presentations/quiz/bloc/hitung_nilai/hitung_nilai_bloc.dart';
 import 'package:fic10_cbt/presentations/quiz/bloc/ujian_by_kategori/ujian_by_kategori_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kiosk_mode/kiosk_mode.dart';
 
 import 'presentations/auth/bloc/login/login_bloc.dart';
 import 'presentations/auth/bloc/register/register_bloc.dart';
 import 'presentations/onboarding/pages/onboarding_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await startKioskMode();
   runApp(const MyApp());
 }
 
@@ -48,6 +54,15 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => CreateUjianBloc(UjianRemoteDatasource()),
+        ),
+        BlocProvider(
+          create: (context) => AnswerBloc(),
+        ),
+        BlocProvider(
+          create: (context) => DaftarSoalBloc(),
+        ),
+        BlocProvider(
+          create: (context) => HitungNilaiBloc(),
         ),
       ],
       child: MaterialApp(

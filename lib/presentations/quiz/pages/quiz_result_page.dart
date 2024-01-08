@@ -1,5 +1,6 @@
 import 'package:fic10_cbt/core/extensions/build_context_ext.dart';
 import 'package:flutter/material.dart';
+import 'package:kiosk_mode/kiosk_mode.dart';
 
 import '../../../core/assets/assets.gen.dart';
 import '../../../core/components/buttons.dart';
@@ -94,7 +95,10 @@ class QuizResultPage extends StatelessWidget {
         color: AppColors.white,
         padding: const EdgeInsets.all(16.0),
         child: Button.filled(
-          onPressed: () => context.popToRoot(),
+          onPressed: () async {
+            await stopKioskMode();
+            context.popToRoot();
+          },
           label: 'Kembali ke Beranda',
         ),
       ),
